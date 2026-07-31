@@ -575,3 +575,104 @@ footer{
     font-size: 1.1rem;
   }
 }
+/* ---------- FAQ and Fees two-column section ---------- */
+
+.faq-fees-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr);
+  gap: 52px;
+  align-items: start;
+  padding: 56px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.faq-column h2,
+.fees-column h2 {
+  font-size: 1.7rem;
+  margin-bottom: 22px;
+}
+
+/* ---------- FAQ dropdowns ---------- */
+
+.faq-item {
+  border-top: 1px solid var(--line);
+}
+
+.faq-item:last-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::after {
+  content: "+";
+  flex: 0 0 auto;
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: var(--coaching);
+}
+
+.faq-item[open] summary::after {
+  content: "−";
+}
+
+.faq-answer {
+  padding: 0 0 20px;
+  color: var(--ink-soft);
+}
+
+.faq-answer p:first-child {
+  margin-top: 0;
+}
+
+.faq-answer a {
+  color: var(--academic);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.faq-answer a:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Fees column ---------- */
+
+.fees-column {
+  padding-left: 42px;
+  border-left: 1px solid var(--line);
+}
+
+.fees-column .fees {
+  margin-top: 0;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 700px) {
+  .faq-fees-grid {
+    grid-template-columns: 1fr;
+    gap: 42px;
+    padding: 42px 0;
+  }
+
+  .fees-column {
+    padding-top: 38px;
+    padding-left: 0;
+    border-top: 1px solid var(--line);
+    border-left: 0;
+  }
+}
