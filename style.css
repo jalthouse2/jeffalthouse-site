@@ -296,3 +296,111 @@ footer{
 @media (max-width:640px){
   .foot-grid{grid-template-columns:1fr; gap:22px;}
 }
+
+/* ---------- coaching image and text rows ---------- */
+
+.coaching-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 52px;
+  align-items: center;
+  padding: 56px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.coaching-copy h2 {
+  font-size: 1.7rem;
+  margin-bottom: 18px;
+}
+
+.coaching-copy p {
+  color: var(--ink-soft);
+}
+
+.coaching-copy a {
+  color: var(--academic);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.coaching-copy a:hover {
+  text-decoration: underline;
+}
+
+.coaching-image {
+  width: 100%;
+  height: 480px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.coaching-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.journey-image img {
+  object-position: center 30%;
+}
+
+.approach-image img {
+  object-position: center;
+}
+
+/* ---------- testimonial ---------- */
+
+.testimonial {
+  max-width: 740px;
+  margin: 72px auto;
+  padding: 38px 42px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.testimonial blockquote {
+  margin: 0;
+}
+
+.testimonial p {
+  margin: 0;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.25rem;
+  line-height: 1.75;
+  color: var(--ink);
+}
+
+.testimonial-name {
+  display: block;
+  margin-top: 18px;
+  text-align: right;
+  font-family: 'Work Sans', sans-serif;
+  font-size: .95rem;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* ---------- mobile coaching layout ---------- */
+
+@media (max-width: 700px) {
+  .coaching-row {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 40px 0;
+  }
+
+  .coaching-image {
+    height: 380px;
+  }
+
+  .testimonial {
+    margin: 52px auto;
+    padding: 30px 12px;
+  }
+
+  .testimonial p {
+    font-size: 1.1rem;
+  }
+}
