@@ -435,7 +435,7 @@ footer{
 
 .testimonial-cta-row {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(220px, .8fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
   gap: 48px;
   align-items: center;
   margin: 72px 0;
@@ -492,6 +492,10 @@ footer{
   background: #a8672a;
 }
 
+.testimonial-cta-row .cta-band a {
+  min-width: 220px;
+  text-align: center;
+}
 
 /* ---------- expandable sections ---------- */
 
