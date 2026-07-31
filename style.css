@@ -431,3 +431,147 @@ footer{
 .coaching-row {
   align-items: center;
 }
+/* ---------- testimonial and consultation ---------- */
+
+.testimonial-cta-row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(220px, .8fr);
+  gap: 48px;
+  align-items: center;
+  margin: 72px 0;
+  padding: 42px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.testimonial-cta-row .testimonial {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.testimonial-cta-row .testimonial p {
+  margin: 0;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.25rem;
+  line-height: 1.75;
+  color: var(--ink);
+}
+
+.testimonial-name {
+  display: block;
+  margin-top: 18px;
+  text-align: right;
+  font-family: 'Work Sans', sans-serif;
+  font-size: .95rem;
+  font-style: normal;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.testimonial-cta {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.testimonial-cta a {
+  display: inline-block;
+  padding: 12px 20px;
+  border-radius: 3px;
+  background: var(--coaching);
+  color: var(--paper);
+  font-size: .88rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  text-decoration: none;
+}
+
+.testimonial-cta a:hover {
+  background: #a8672a;
+}
+
+
+/* ---------- expandable sections ---------- */
+
+.dropdown-section {
+  border-bottom: 1px solid var(--line);
+}
+
+.dropdown-section:first-of-type {
+  border-top: 1px solid var(--line);
+}
+
+.dropdown-section summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 0;
+  cursor: pointer;
+  list-style: none;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.dropdown-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.dropdown-section summary::after {
+  content: "+";
+  margin-left: 20px;
+  font-family: 'Work Sans', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--coaching);
+}
+
+.dropdown-section[open] summary::after {
+  content: "−";
+}
+
+.dropdown-content {
+  padding: 0 0 28px;
+  color: var(--ink-soft);
+}
+
+.dropdown-content p:first-child {
+  margin-top: 0;
+}
+
+.dropdown-content a {
+  color: var(--academic);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.dropdown-content a:hover {
+  text-decoration: underline;
+}
+
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 700px) {
+  .testimonial-cta-row {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    margin: 52px 0;
+    padding: 34px 0;
+  }
+
+  .testimonial-cta {
+    justify-content: flex-start;
+  }
+
+  .testimonial-cta a {
+    width: 100%;
+  }
+
+  .testimonial-cta-row .testimonial p {
+    font-size: 1.1rem;
+  }
+}
