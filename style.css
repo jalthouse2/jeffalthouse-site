@@ -404,3 +404,30 @@ footer{
     font-size: 1.1rem;
   }
 }
+/* Keep both coaching images the same size */
+.journey-image,
+.approach-image {
+  width: 100%;
+  height: 480px;
+  align-self: center;
+  overflow: hidden;
+}
+
+/* Make both photos fill their frames */
+.journey-image img,
+.approach-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Center the visible part of the reflection photo */
+.approach-image img {
+  object-position: center center;
+}
+
+/* Vertically center each image beside its text */
+.coaching-row {
+  align-items: center;
+}
