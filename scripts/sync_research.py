@@ -82,6 +82,7 @@ class DocTextExtractor(HTMLParser):
         self._tag_stack = []
         self._current_kind = None
         self._in_body = False
+        self._span_stack = []
 
     def handle_starttag(self, tag, attrs):
         if tag == "body":
@@ -103,6 +104,19 @@ class DocTextExtractor(HTMLParser):
             self._buf.append("<strong>")
         elif tag in ("i", "em"):
             self._buf.append("<em>")
+        elif tag == "span":
+            # Google Docs' HTML export represents bold/italic as inline
+            # CSS on <span> elements (e.g. style="font-weight:700"),
+            # not as semantic <b>/<i> tags. Detect that here.
+            style = dict(attrs).get("style", "") or ""
+            opens = []
+            if re.search(r"font-weight\s*:\s*(700|800|900|bold)", style, re.I):
+                opens.append("strong")
+            if re.search(r"font-style\s*:\s*italic", style, re.I):
+                opens.append("em")
+            for tagname in opens:
+                self._buf.append(f"<{tagname}>")
+            self._span_stack.append(opens)
 
     def handle_endtag(self, tag):
         if tag in ("p", "li") and self._current_kind is not None:
@@ -117,6 +131,11 @@ class DocTextExtractor(HTMLParser):
             self._buf.append("</strong>")
         elif tag in ("i", "em"):
             self._buf.append("</em>")
+        elif tag == "span":
+            if self._span_stack:
+                opens = self._span_stack.pop()
+                for tagname in reversed(opens):
+                    self._buf.append(f"</{tagname}>")
 
     def handle_data(self, data):
         if self._current_kind is not None:
