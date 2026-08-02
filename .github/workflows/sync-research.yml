@@ -1,0 +1,34 @@
+name: Sync research from CV
+
+# Runs every Monday morning, and any time you want to trigger it by
+# hand from the Actions tab (click "Run workflow").
+on:
+  schedule:
+    - cron: "0 7 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync research.html from CV Google Doc
+        env:
+          CV_DOC_ID: "1U0WGa4N0xGRis41AlLBDVUJK9Wpc33KVoKrlzTe09SA"
+        run: python scripts/sync_research.py
+
+      - name: Commit changes if any
+        run: |
+          git config user.name "research-sync-bot"
+          git config user.email "actions@github.com"
+          git add research.html
+          git diff --cached --quiet || git commit -m "Auto-sync research.html from CV"
+          git push
