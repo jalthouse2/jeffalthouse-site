@@ -78,7 +78,9 @@ class DocTextExtractor(HTMLParser):
     def __init__(self):
         super().__init__(convert_charrefs=True)
         self.blocks = []
+        self.raw_blocks = []
         self._buf = []
+        self._raw_buf = []
         self._tag_stack = []
         self._current_kind = None
         self._in_body = False
@@ -99,8 +101,12 @@ class DocTextExtractor(HTMLParser):
             return
         if tag in ("p", "li"):
             self._buf = []
+            self._raw_buf = []
             self._current_kind = "li" if tag == "li" else "p"
-        elif tag == "a":
+        elif self._current_kind is not None:
+            self._raw_buf.append(self.get_starttag_text() or f"<{tag}>")
+
+        if tag == "a":
             href = attrs_dict.get("href", "")
             # Google wraps outbound links in a redirect; unwrap it.
             m = re.search(r"[?&]q=([^&]+)", href)
@@ -148,11 +154,17 @@ class DocTextExtractor(HTMLParser):
             return
         if tag in ("p", "li") and self._current_kind is not None:
             text = "".join(self._buf).strip()
+            raw_text = "".join(self._raw_buf).strip()
             if text:
                 self.blocks.append((self._current_kind, text))
+                self.raw_blocks.append(raw_text)
             self._buf = []
+            self._raw_buf = []
             self._current_kind = None
-        elif tag == "a":
+            return
+        if self._current_kind is not None:
+            self._raw_buf.append(f"</{tag}>")
+        if tag == "a":
             self._buf.append("</a>")
         elif tag in ("b", "strong"):
             self._buf.append("</strong>")
@@ -170,6 +182,7 @@ class DocTextExtractor(HTMLParser):
             return
         if self._current_kind is not None:
             self._buf.append(data)
+            self._raw_buf.append(data)
 
 
 def fetch_doc_html(doc_id):
@@ -207,15 +220,20 @@ def build_section_html(label, entries):
     )
 
 
-def parse_sections(blocks):
+def parse_sections(blocks, raw_blocks=None):
     """Walk the flat block list and bucket entries under each heading
-    in SECTIONS, in order."""
+    in SECTIONS, in order. Each bucketed entry is a (cleaned_text,
+    raw_html) pair — raw_html is the verbatim source markup for that
+    block, kept only for diagnostics."""
+    if raw_blocks is None:
+        raw_blocks = [""] * len(blocks)
+
     heading_texts = [h for h, _ in SECTIONS]
     current = None
     buckets = {h: [] for h in heading_texts}
     stopped = False
 
-    for kind, raw in blocks:
+    for (kind, raw), raw_html in zip(blocks, raw_blocks):
         plain = normalize_heading(raw)
         if plain.upper().startswith(STOP_HEADING.upper()):
             stopped = True
@@ -241,11 +259,15 @@ def parse_sections(blocks):
         text_only = re.sub(r"<[^>]+>", "", cleaned).strip()
         is_orphan_link = bool(re.fullmatch(r"\[?(PDF|Link)\]?", text_only, re.I))
         if is_orphan_link and current and buckets[current]:
-            buckets[current][-1] = buckets[current][-1].rstrip() + " " + cleaned
+            prev_cleaned, prev_raw = buckets[current][-1]
+            buckets[current][-1] = (
+                prev_cleaned.rstrip() + " " + cleaned,
+                prev_raw + " || ORPHAN_MERGED || " + raw_html,
+            )
             continue
 
         if current and kind == "li":
-            buckets[current].append(cleaned)
+            buckets[current].append((cleaned, raw_html))
 
     if not stopped:
         print("Warning: did not find the stop heading "
@@ -265,7 +287,7 @@ def main():
     parser = DocTextExtractor()
     parser.feed(html)
 
-    buckets = parse_sections(parser.blocks)
+    buckets = parse_sections(parser.blocks, parser.raw_blocks)
 
     missing = [h for h, entries in buckets.items() if not entries]
     if missing:
@@ -274,19 +296,21 @@ def main():
               "check SECTIONS in this script against the CV.", file=sys.stderr)
 
     for heading, entries in buckets.items():
-        for entry in entries:
-            mentions_link_word = re.search(r"\[(PDF|Link)\]", entry, re.I)
-            has_anchor = "<a " in entry
+        for cleaned, raw_html in entries:
+            mentions_link_word = re.search(r"\[(PDF|Link)\]", cleaned, re.I)
+            has_anchor = "<a " in cleaned
             if mentions_link_word and not has_anchor:
-                snippet = re.sub(r"<[^>]+>", "", entry)[:90]
+                snippet = re.sub(r"<[^>]+>", "", cleaned)[:90]
                 print(f"Warning: entry in '{heading}' mentions "
                       f"{mentions_link_word.group(0)} but has no hyperlink "
                       f"attached — check this citation in the CV doc: "
                       f"\"{snippet}...\"", file=sys.stderr)
+                print(f"  Raw source HTML for that entry: {raw_html}",
+                      file=sys.stderr)
 
     section_html_blocks = []
     for heading, label in SECTIONS:
-        entries = buckets.get(heading, [])
+        entries = [cleaned for cleaned, _raw in buckets.get(heading, [])]
         if entries:
             section_html_blocks.append(build_section_html(label, entries))
 
