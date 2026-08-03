@@ -83,8 +83,16 @@ class DocTextExtractor(HTMLParser):
         self._current_kind = None
         self._in_body = False
         self._span_stack = []
+        self._in_style = False
+        self._style_buf = []
+        self.class_styles = {}
 
     def handle_starttag(self, tag, attrs):
+        attrs_dict = dict(attrs)
+        if tag == "style":
+            self._in_style = True
+            self._style_buf = []
+            return
         if tag == "body":
             self._in_body = True
         if not self._in_body:
@@ -93,7 +101,7 @@ class DocTextExtractor(HTMLParser):
             self._buf = []
             self._current_kind = "li" if tag == "li" else "p"
         elif tag == "a":
-            href = dict(attrs).get("href", "")
+            href = attrs_dict.get("href", "")
             # Google wraps outbound links in a redirect; unwrap it.
             m = re.search(r"[?&]q=([^&]+)", href)
             if m:
@@ -105,10 +113,16 @@ class DocTextExtractor(HTMLParser):
         elif tag in ("i", "em"):
             self._buf.append("<em>")
         elif tag == "span":
-            # Google Docs' HTML export represents bold/italic as inline
-            # CSS on <span> elements (e.g. style="font-weight:700"),
-            # not as semantic <b>/<i> tags. Detect that here.
-            style = dict(attrs).get("style", "") or ""
+            # Google Docs' HTML export represents bold/italic either as
+            # inline CSS on the <span> (style="font-weight:700") or,
+            # more commonly, as a numbered CSS class defined in a
+            # <style> block at the top of the document (class="c3",
+            # with ".c3{font-weight:700}" declared separately). Check
+            # both.
+            classes = attrs_dict.get("class", "").split()
+            style_parts = [self.class_styles.get(c, "") for c in classes]
+            style_parts.append(attrs_dict.get("style", "") or "")
+            style = ";".join(style_parts)
             opens = []
             if re.search(r"font-weight\s*:\s*(700|800|900|bold)", style, re.I):
                 opens.append("strong")
@@ -119,6 +133,19 @@ class DocTextExtractor(HTMLParser):
             self._span_stack.append(opens)
 
     def handle_endtag(self, tag):
+        if tag == "style":
+            self._in_style = False
+            css_text = "".join(self._style_buf)
+            # Match rules like ".c3{...}" or ".c3,.c8{...}"
+            for selector, body in re.findall(r"([^{}]+)\{([^{}]*)\}", css_text):
+                for cls in selector.split(","):
+                    cls = cls.strip().lstrip(".")
+                    if not cls:
+                        continue
+                    self.class_styles[cls] = (
+                        self.class_styles.get(cls, "") + ";" + body
+                    )
+            return
         if tag in ("p", "li") and self._current_kind is not None:
             text = "".join(self._buf).strip()
             if text:
@@ -138,6 +165,9 @@ class DocTextExtractor(HTMLParser):
                     self._buf.append(f"</{tagname}>")
 
     def handle_data(self, data):
+        if self._in_style:
+            self._style_buf.append(data)
+            return
         if self._current_kind is not None:
             self._buf.append(data)
 
