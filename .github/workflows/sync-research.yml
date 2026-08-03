@@ -1,22 +1,30 @@
 name: Sync research from CV
 
-# Runs every Monday morning, and any time you want to trigger it by
-# hand from the Actions tab (click "Run workflow").
 on:
   schedule:
     - cron: "0 7 * * 1"
-  workflow_dispatch: {}
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: sync-research-from-cv
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+    steps:
+      - name: Check out latest main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
@@ -25,10 +33,20 @@ jobs:
           CV_DOC_ID: "1U0WGa4N0xGRis41AlLBDVUJK9Wpc33KVoKrlzTe09SA"
         run: python scripts/sync_research.py
 
-      - name: Commit changes if any
+      - name: Commit and push changes
         run: |
           git config user.name "research-sync-bot"
           git config user.email "actions@github.com"
+
           git add research.html
-          git diff --cached --quiet || git commit -m "Auto-sync research.html from CV"
-          git push
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "Auto-sync research.html from CV"
+
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
