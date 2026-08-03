@@ -227,8 +227,25 @@ def parse_sections(blocks):
         if matched_heading:
             current = matched_heading
             continue
+
+        cleaned = clean_entry_text(raw)
+        if not cleaned:
+            continue
+
+        # Google Docs sometimes splits a citation across a page break,
+        # leaving a trailing link (e.g. just "[PDF]") stranded in its
+        # own paragraph/list item rather than attached to the citation
+        # text. Detect that case and glue it onto the previous entry
+        # instead of dropping it (previous behavior) or adding it as a
+        # spurious standalone entry.
+        text_only = re.sub(r"<[^>]+>", "", cleaned).strip()
+        is_orphan_link = bool(re.fullmatch(r"\[?(PDF|Link)\]?", text_only, re.I))
+        if is_orphan_link and current and buckets[current]:
+            buckets[current][-1] = buckets[current][-1].rstrip() + " " + cleaned
+            continue
+
         if current and kind == "li":
-            buckets[current].append(clean_entry_text(raw))
+            buckets[current].append(cleaned)
 
     if not stopped:
         print("Warning: did not find the stop heading "
@@ -255,6 +272,17 @@ def main():
         print(f"Warning: no entries found for: {', '.join(missing)}. "
               "Section headings in the doc may have changed wording — "
               "check SECTIONS in this script against the CV.", file=sys.stderr)
+
+    for heading, entries in buckets.items():
+        for entry in entries:
+            mentions_link_word = re.search(r"\[(PDF|Link)\]", entry, re.I)
+            has_anchor = "<a " in entry
+            if mentions_link_word and not has_anchor:
+                snippet = re.sub(r"<[^>]+>", "", entry)[:90]
+                print(f"Warning: entry in '{heading}' mentions "
+                      f"{mentions_link_word.group(0)} but has no hyperlink "
+                      f"attached — check this citation in the CV doc: "
+                      f"\"{snippet}...\"", file=sys.stderr)
 
     section_html_blocks = []
     for heading, label in SECTIONS:
