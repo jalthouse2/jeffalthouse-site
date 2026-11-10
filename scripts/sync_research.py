@@ -212,7 +212,7 @@ def build_section_html(label, entries):
     items = "\n".join(f"        <li>{e}</li>" for e in entries)
     return (
         f'    <section class="block">\n'
-        f'      <h3>{label}</h3>\n'
+        f'      <h2>{label}</h2>\n'
         f'      <ul class="pub-list">\n'
         f'{items}\n'
         f'      </ul>\n'
