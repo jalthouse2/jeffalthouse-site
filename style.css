@@ -702,3 +702,18 @@ footer a:focus-visible{outline-color:#E4E9E5;}
 
 /* ---------- bird band (contact page) ---------- */
 .bird-band{display:block; width:100%; height:auto; margin:44px 0 56px; color:var(--ink);}
+
+/* ---------- homepage: dark hero with bird line, plain two columns ---------- */
+.hero-dark{background:var(--foot); padding:64px 0 48px;}
+.hero-dark h1{color:#FFFFFF;}
+.hero-dark p{color:#C3CCC5;}
+.hero-dark .hero-photo{border-color:#33433A;}
+.hero-dark .bird-band{color:#E9EEEA; margin:40px 0 0;}
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:56px; margin-top:56px;}
+.two-col .eyebrow{margin:0 0 14px; color:var(--ink);}
+.two-col p{color:var(--ink-soft); font-size:.96rem;}
+.two-col a.more{
+  display:inline-block; margin-top:10px; font-size:.85rem; font-weight:600;
+  text-decoration:none; border-bottom:1.5px solid currentColor; padding-bottom:2px;
+}
+@media (max-width:700px){ .two-col{grid-template-columns:1fr; gap:36px;} }
