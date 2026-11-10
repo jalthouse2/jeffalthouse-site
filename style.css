@@ -5,14 +5,14 @@
    academic (systemic) #34465F, tint #EDF1F5
    coaching (personal) #C17F3E for lines, #92581F for text/buttons, tint #F7EFE5
    line #D9DDDA | footer #1F2B25
-   Display: Fraunces (serif, variable) | Body: Work Sans
+   Display: Manrope | Body: Figtree (has true italics, which Manrope lacks)
    Signature: the "bridge line" — a hairline that runs straight
    and dashed on the academic side, then relaxes into a soft
    hand-drawn curve on the coaching side. Used as section marker
    and hero motif throughout.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,500&family=Work+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Figtree:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap');
 
 :root{
   --paper:#FCFCFB;
@@ -38,7 +38,7 @@ body{
   margin:0;
   background:var(--paper);
   color:var(--ink);
-  font-family:'Work Sans', -apple-system, sans-serif;
+  font-family:'Figtree', -apple-system, sans-serif;
   font-weight:400;
   line-height:1.6;
   -webkit-font-smoothing:antialiased;
@@ -51,15 +51,17 @@ img{max-width:100%; display:block;}
 ::selection{background:var(--academic); color:var(--paper);}
 
 h1,h2,h3{
-  font-family:'Fraunces', Georgia, serif;
-  font-weight:600;
+  font-family:'Manrope', sans-serif;
+  font-weight:700;
   margin:0 0 .4em;
-  letter-spacing:-.01em;
+  letter-spacing:-.02em;
+  line-height:1.2;
+  text-wrap:balance;
   color:var(--ink);
 }
 
 .eyebrow{
-  font-family:'Work Sans', sans-serif;
+  font-family:'Figtree', sans-serif;
   font-size:.72rem;
   letter-spacing:.16em;
   text-transform:uppercase;
@@ -81,8 +83,8 @@ header.site-head{
   padding-top:18px; padding-bottom:18px;
 }
 .wordmark{
-  font-family:'Fraunces', serif;
-  font-weight:600;
+  font-family:'Manrope', sans-serif;
+  font-weight:800;
   font-size:1.05rem;
   letter-spacing:.02em;
   text-decoration:none;
@@ -299,7 +301,7 @@ footer h4{color:#F4F6F3;}
   display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:30px;
 }
 .foot-grid h4{
-  font-family:'Fraunces', serif; font-size:.95rem; font-weight:600; margin:0 0 10px;
+  font-family:'Manrope', sans-serif; font-size:.95rem; font-weight:600; margin:0 0 10px;
 }
 .foot-grid ul{list-style:none; margin:0; padding:0;}
 .foot-grid li{margin-bottom:6px;}
@@ -382,7 +384,7 @@ footer a:focus-visible{outline-color:#E4E9E5;}
 
 .testimonial p {
   margin: 0;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Figtree', sans-serif;
   font-size: 1.25rem;
   line-height: 1.75;
   color: var(--ink);
@@ -392,7 +394,7 @@ footer a:focus-visible{outline-color:#E4E9E5;}
   display: block;
   margin-top: 18px;
   text-align: right;
-  font-family: 'Work Sans', sans-serif;
+  font-family: 'Figtree', sans-serif;
   font-size: .95rem;
   font-style: normal;
   font-weight: 600;
@@ -470,7 +472,7 @@ footer a:focus-visible{outline-color:#E4E9E5;}
 
 .testimonial-cta-row .testimonial p {
   margin: 0;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Figtree', sans-serif;
   font-size: 1.25rem;
   line-height: 1.75;
   color: var(--ink);
@@ -480,7 +482,7 @@ footer a:focus-visible{outline-color:#E4E9E5;}
   display: block;
   margin-top: 18px;
   text-align: right;
-  font-family: 'Work Sans', sans-serif;
+  font-family: 'Figtree', sans-serif;
   font-size: .95rem;
   font-style: normal;
   font-weight: 600;
@@ -531,7 +533,7 @@ footer a:focus-visible{outline-color:#E4E9E5;}
   padding: 22px 0;
   cursor: pointer;
   list-style: none;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Manrope', sans-serif;
   font-size: 1.15rem;
   font-weight: 600;
   color: var(--ink);
@@ -544,7 +546,7 @@ footer a:focus-visible{outline-color:#E4E9E5;}
 .dropdown-section summary::after {
   content: "+";
   margin-left: 20px;
-  font-family: 'Work Sans', sans-serif;
+  font-family: 'Figtree', sans-serif;
   font-size: 1.4rem;
   font-weight: 400;
   color: var(--coaching-ink);
