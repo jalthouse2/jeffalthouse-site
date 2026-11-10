@@ -700,15 +700,5 @@ footer a:focus-visible{outline-color:#E4E9E5;}
   }
 }
 
-/* ---------- bird flourish after page headings ---------- */
-.nowrap{white-space:nowrap;}
-.flourish{
-  display:inline-block;
-  height:.95em;
-  width:auto;
-  aspect-ratio:230/56;
-  margin-left:.25em;
-  vertical-align:-.03em;
-  color:var(--ink-soft);
-}
-.flourish-foot{height:1.6em; margin:-1em 0 0 .5em; vertical-align:-.04em; color:#C3CCC5;}
+/* ---------- bird band (contact page) ---------- */
+.bird-band{display:block; width:100%; height:auto; margin:44px 0 56px; color:var(--ink);}
