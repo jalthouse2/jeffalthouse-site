@@ -126,14 +126,14 @@ nav.primary a[aria-current="page"]::after{
 
 .hero-grid {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 240px 1fr;
   gap: 44px;
   align-items: center;
 }
 
 .hero-photo {
-  width: 300px;
-  height: 420px;
+  width: 240px;
+  height: 336px;
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -179,8 +179,8 @@ nav.primary a[aria-current="page"]::after{
 
   .hero-photo {
     width: 100%;
-    max-width: 320px;
-    height: 400px;
+    max-width: 260px;
+    height: 364px;
   }
 }
 
