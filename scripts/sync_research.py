@@ -2,7 +2,7 @@
 """
 sync_research.py
 
-Pulls the "Publications" and "Popular Media" sections out of Jeff's CV
+Pulls the sub-sections of the "PUBLICATIONS" part of Jeff's CV
 Google Doc and regenerates the auto-managed block of research.html.
 
 How it works
@@ -55,18 +55,22 @@ END_MARKER = "<!-- RESEARCH-AUTO-END -->"
 # Order matters: the script reads the doc top-to-bottom and treats
 # everything between one heading and the next as belonging to the
 # first heading.
+# Headings are matched case-insensitively, and "&" / "and" are treated
+# as the same word, so "Reports for NGOs, public and multilateral
+# institutions" matches the entry below.
 SECTIONS = [
     ("Articles in Peer-Reviewed Journals", "Articles in Peer-Reviewed Journals"),
     ("Book Chapters in Edited Volumes", "Book Chapters in Edited Volumes"),
     ("Reports for NGOs, Public & Multilateral Institutions", "Reports for NGOs, Public & Multilateral Institutions"),
     ("Working Papers", "Working Papers"),
-    ("Podcasts and Radio", "Media — Podcasts & Radio"),
-    ("Blogs", "Media — Blogs"),
+    ("Popular Media", "Popular Media"),
 ]
 
-# Heading that marks the end of the last section we care about (Blogs).
-# Once the parser sees this, it stops collecting entries.
-STOP_HEADING = "PRESENTATIONS AT ACADEMIC CONFERENCES"
+# The script only reads the part of the CV that starts at this
+# top-level heading, and stops at the next top-level (ALL-CAPS)
+# heading after it (currently "TEACHING EXPERIENCE"). That keeps it
+# from ever picking up teaching or job bullets, whatever their wording.
+START_HEADING = "PUBLICATIONS"
 
 
 class DocTextExtractor(HTMLParser):
@@ -88,6 +92,12 @@ class DocTextExtractor(HTMLParser):
         self._in_style = False
         self._style_buf = []
         self.class_styles = {}
+        # Table state: the CV lays entries out as two-column table rows
+        # (year | citation). Each <tr> becomes one ("row", [cell, ...])
+        # block, where each cell is its paragraphs joined by spaces.
+        self._row = None
+        self._cell = None
+        self._raw_row = None
 
     def handle_starttag(self, tag, attrs):
         attrs_dict = dict(attrs)
@@ -98,6 +108,12 @@ class DocTextExtractor(HTMLParser):
         if tag == "body":
             self._in_body = True
         if not self._in_body:
+            return
+        if tag == "tr":
+            self._row, self._raw_row = [], []
+            return
+        if tag == "td":
+            self._cell = []
             return
         if tag in ("p", "li"):
             self._buf = []
@@ -152,10 +168,25 @@ class DocTextExtractor(HTMLParser):
                         self.class_styles.get(cls, "") + ";" + body
                     )
             return
+        if tag == "td" and self._cell is not None:
+            if self._row is not None:
+                self._row.append(" ".join(self._cell))
+            self._cell = None
+            return
+        if tag == "tr" and self._row is not None:
+            if any(c.strip() for c in self._row):
+                self.blocks.append(("row", self._row))
+                self.raw_blocks.append(" | ".join(self._raw_row))
+            self._row = self._raw_row = None
+            return
         if tag in ("p", "li") and self._current_kind is not None:
             text = "".join(self._buf).strip()
             raw_text = "".join(self._raw_buf).strip()
-            if text:
+            if text and self._cell is not None:
+                self._cell.append(text)
+                if self._raw_row is not None:
+                    self._raw_row.append(raw_text)
+            elif text:
                 self.blocks.append((self._current_kind, text))
                 self.raw_blocks.append(raw_text)
             self._buf = []
@@ -220,59 +251,77 @@ def build_section_html(label, entries):
     )
 
 
+def _heading_key(text):
+    t = normalize_heading(text).rstrip(" :").lower()
+    t = t.replace("&", " and ")
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def _is_top_heading(plain):
+    # Top-level CV headings are written in ALL CAPS ("TEACHING
+    # EXPERIENCE"); section sub-headings and entries are not.
+    letters = [c for c in plain if c.isalpha()]
+    return len(letters) >= 4 and all(c.isupper() for c in letters)
+
+
 def parse_sections(blocks, raw_blocks=None):
     """Walk the flat block list and bucket entries under each heading
-    in SECTIONS, in order. Each bucketed entry is a (cleaned_text,
-    raw_html) pair — raw_html is the verbatim source markup for that
-    block, kept only for diagnostics."""
+    in SECTIONS. Only the part of the doc between START_HEADING and the
+    next ALL-CAPS heading is read. An entry is either a table row (the
+    last non-empty cell is the citation; the first is the year) or a
+    bulleted list item. Each bucketed entry is a (cleaned_text,
+    raw_html) pair — raw_html is kept only for diagnostics."""
     if raw_blocks is None:
         raw_blocks = [""] * len(blocks)
 
-    heading_texts = [h for h, _ in SECTIONS]
+    keys = {_heading_key(h): h for h, _ in SECTIONS}
+    buckets = {h: [] for h, _ in SECTIONS}
     current = None
-    buckets = {h: [] for h in heading_texts}
-    stopped = False
+    in_pubs = False
+    found_start = False
 
     for (kind, raw), raw_html in zip(blocks, raw_blocks):
-        plain = normalize_heading(raw)
-        if plain.upper().startswith(STOP_HEADING.upper()):
-            stopped = True
-            break
-        matched_heading = next(
-            (h for h in heading_texts if plain.rstrip(" :").lower() == h.rstrip(" :").lower()),
-            None,
-        )
-        if matched_heading:
-            current = matched_heading
+        if kind in ("p", "li"):
+            plain = normalize_heading(raw)
+            key = _heading_key(raw)
+            if not in_pubs:
+                if kind == "p" and key == _heading_key(START_HEADING):
+                    in_pubs = found_start = True
+                continue
+            if kind == "p" and _is_top_heading(plain):
+                break  # reached the next top-level CV section
+            if key in keys:
+                current = keys[key]
+                continue
+            if kind == "p":
+                continue  # stray non-entry paragraph
+            cleaned = clean_entry_text(raw)
+        else:  # table row
+            if not in_pubs:
+                continue
+            cells = [c for c in raw if re.sub(r"<[^>]+>", "", c).strip()]
+            if not cells:
+                continue
+            cleaned = clean_entry_text(cells[-1])
+
+        if not cleaned or not current:
             continue
 
-        cleaned = clean_entry_text(raw)
-        if not cleaned:
-            continue
-
-        # Google Docs sometimes splits a citation across a page break,
-        # leaving a trailing link (e.g. just "[PDF]") stranded in its
-        # own paragraph/list item rather than attached to the citation
-        # text. Detect that case and glue it onto the previous entry
-        # instead of dropping it (previous behavior) or adding it as a
-        # spurious standalone entry.
+        # Google Docs sometimes leaves a trailing link (e.g. just
+        # "[PDF]") stranded in its own paragraph/row. Glue it onto the
+        # previous entry rather than adding a spurious entry.
         text_only = re.sub(r"<[^>]+>", "", cleaned).strip()
-        is_orphan_link = bool(re.fullmatch(r"\[?(PDF|Link)\]?", text_only, re.I))
-        if is_orphan_link and current and buckets[current]:
+        if re.fullmatch(r"\[?(PDF|Link)\]?", text_only, re.I) and buckets[current]:
             prev_cleaned, prev_raw = buckets[current][-1]
-            buckets[current][-1] = (
-                prev_cleaned.rstrip() + " " + cleaned,
-                prev_raw + " || ORPHAN_MERGED || " + raw_html,
-            )
+            buckets[current][-1] = (prev_cleaned.rstrip() + " " + cleaned,
+                                    prev_raw + " || ORPHAN_MERGED || " + raw_html)
             continue
 
-        if current and kind == "li":
-            buckets[current].append((cleaned, raw_html))
+        buckets[current].append((cleaned, raw_html))
 
-    if not stopped:
-        print("Warning: did not find the stop heading "
-              f"'{STOP_HEADING}' — double check SECTIONS still matches "
-              "the doc's current headings.", file=sys.stderr)
+    if not found_start:
+        print(f"Warning: did not find the '{START_HEADING}' heading in the "
+              "CV — nothing was read.", file=sys.stderr)
 
     return buckets
 
@@ -307,6 +356,11 @@ def main():
                       f"\"{snippet}...\"", file=sys.stderr)
                 print(f"  Raw source HTML for that entry: {raw_html}",
                       file=sys.stderr)
+
+    if all(not entries for entries in buckets.values()):
+        print("No publication entries found at all — leaving research.html "
+              "untouched.", file=sys.stderr)
+        sys.exit(1)
 
     section_html_blocks = []
     for heading, label in SECTIONS:
