@@ -72,6 +72,15 @@ SECTIONS = [
 # from ever picking up teaching or job bullets, whatever their wording.
 START_HEADING = "PUBLICATIONS"
 
+# Entries to keep off the site until a given date (YYYY-MM-DD, UTC),
+# e.g. papers not yet announced. Match is a case-insensitive piece of
+# the citation text (the title is safest). Once the date has passed,
+# the entry appears on the next sync and its line here can be deleted.
+HOLD_UNTIL = [
+    ("The changing dynamics of financial subordination", "2026-12-16"),
+    ("New nature-economy models are needed", "2026-12-16"),
+]
+
 
 class DocTextExtractor(HTMLParser):
     """Turns the Google Docs HTML export into a flat list of
@@ -362,9 +371,21 @@ def main():
               "untouched.", file=sys.stderr)
         sys.exit(1)
 
+    import datetime
+    today = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+
+    def on_hold(entry):
+        text = re.sub(r"<[^>]+>", "", entry).lower()
+        for needle, until in HOLD_UNTIL:
+            if needle.lower() in text and today < until:
+                print(f"Holding back until {until}: {needle}")
+                return True
+        return False
+
     section_html_blocks = []
     for heading, label in SECTIONS:
-        entries = [cleaned for cleaned, _raw in buckets.get(heading, [])]
+        entries = [cleaned for cleaned, _raw in buckets.get(heading, [])
+                   if not on_hold(cleaned)]
         if entries:
             section_html_blocks.append(build_section_html(label, entries))
 
